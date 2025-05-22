@@ -71,8 +71,8 @@ const pollClinicians = async () => {
                     await emailService.send({
                         from: config.EMAIL_USER,
                         to: config.EMAIL_USER,
-                        subject: `Clinician #${clinician.id} has is in the safety zone`,
-                        message: `A previous alert indicated that ${existingAlert.type === "out-of-zone" ? `Clinician #${clinician.id} was out of their safety zone` : `en error occured while trying to poll Clinician #${clinician.id}'s status`}. They are back in the safety zone.`
+                        subject: `Clinician #${clinician.id} is in the safety zone`,
+                        message: `A previous alert indicated that ${existingAlert.type === "out-of-zone" ? `Clinician #${clinician.id} was out of their safety zone` : `an error occured while trying to poll Clinician #${clinician.id}'s status`}. They are back in the safety zone.`
                     });
                 }
 
