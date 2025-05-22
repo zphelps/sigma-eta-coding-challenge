@@ -10,6 +10,13 @@ interface Alert {
     createdAt: Date;
 }
 
+/**
+ * This service is used to store and retrieve alerts about clinicians.
+ * 
+ * Importantly, there can only be one alert per clinician. If an alert already exists for a clinician, it will be updated.
+ * 
+ * @returns An instance of the AlertService class.
+ */
 class AlertService {
     private dynamodb: DynamoDBClient;
 
@@ -18,7 +25,6 @@ class AlertService {
             endpoint: config.DB_ENDPOINT_URL,
         });
     }
-
 
     async addAlert(alert: Alert) {
         const command = new PutItemCommand({

@@ -15,9 +15,15 @@ interface ClinicianStatus {
     error?: string;
 }
 
+/**
+ * This service is used to fetch information about clinicians, including their current status.
+ * 
+ * @returns An instance of the ClinicianService class.
+ */
 class ClinicianService {
 
     getClinicians = async (): Promise<Clinician[]> => {
+        // This is a mock implementation since we are only dealing with 7 clinicians in this assessment.
         return Array.from({ length: 7 }, (_, i) => ({ id: i + 1 }));
     }
 
