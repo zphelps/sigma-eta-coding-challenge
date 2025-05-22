@@ -45,7 +45,7 @@ const pollClinicians = async () => {
                 from: config.ALERT_SENDER_EMAIL,
                 to: config.ALERT_RECIPIENT_EMAIL,
                 subject: `Error fetching clinician status for clinician ${clinician.id}`,
-                message: `The following error occurred while fetching the status for clinician #${clinician.id}: \n\n"${status.error}" \n\n We will continue to poll for updates.`
+                message: `The following error occurred while fetching the status for clinician #${clinician.id}: \n\n"${status.error}" \n\n We will continue to poll for updates and provide an update when we determine their status.`
             });
 
             return;
@@ -70,7 +70,7 @@ const pollClinicians = async () => {
                     await emailService.send({
                         from: config.ALERT_SENDER_EMAIL,
                         to: config.ALERT_RECIPIENT_EMAIL,
-                        subject: `Clinician #${clinician.id} is out of zone`,
+                        subject: `URGENT: Clinician #${clinician.id} is out of their safety zone.`,
                         message: `A previous alert indicated that an error occured while trying to poll Clinician #${clinician.id}'s status, but we now have an update on their status. They are out of their safety zone. Please check in on them. Another alert will be sent if/when they return to their safety zone.`
                     });
                     return;
@@ -79,7 +79,7 @@ const pollClinicians = async () => {
                     await emailService.send({
                         from: config.ALERT_SENDER_EMAIL,
                         to: config.ALERT_RECIPIENT_EMAIL,
-                        subject: `Clinician #${clinician.id} is out of zone`,
+                        subject: `URGENT: Clinician #${clinician.id} is out of their safety zone.`,
                         message: `Clinician #${clinician.id} is currently out of the safety zone. Please check in on them. Another alert will be sent if/when they return to their safety zone.`
                     });
                 }
