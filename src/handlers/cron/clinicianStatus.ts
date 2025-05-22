@@ -8,8 +8,8 @@ import { config } from "../../config";
 const emailService = new EmailService(createTransport({
     host: "smtp.gmail.com",
     auth: {
-        user: config.EMAIL_USER,
-        pass: config.EMAIL_PASSWORD,
+        user: config.ALERT_SENDER_EMAIL,
+        pass: config.ALERT_SENDER_EMAIL_PASSWORD,
     },
 }));
 
@@ -26,6 +26,7 @@ const pollClinicians = async () => {
 
         if (status.error) {
             console.error(`Error fetching clinician status for clinician ${clinician.id}: ${status.error}`);
+
             const alert: Alert = {
                 clinicianId: clinician.id,
                 type: "api-error",
@@ -34,9 +35,15 @@ const pollClinicians = async () => {
             }
 
             await alertService.addAlert(alert);
+
+            if (existingAlert && existingAlert.type === "api-error") {
+                console.log(`Skipping email for clinician ${clinician.id} because an API error alert email has already been sent. We will continue to poll for updates.`);
+                return;
+            }
+
             await emailService.send({
-                from: config.EMAIL_USER,
-                to: config.EMAIL_USER,
+                from: config.ALERT_SENDER_EMAIL,
+                to: config.ALERT_RECIPIENT_EMAIL,
                 subject: `Error fetching clinician status for clinician ${clinician.id}`,
                 message: `The following error occurred while fetching the status for clinician #${clinician.id}: \n\n"${status.error}" \n\n We will continue to poll for updates.`
             });
@@ -46,33 +53,56 @@ const pollClinicians = async () => {
 
         switch (status.status) {
             case "out-of-zone":
-                if (!existingAlert) {
-                    console.log(`Clinician ${clinician.id} is out of zone`);
-                    const alert: Alert = {
-                        clinicianId: clinician.id,
-                        type: "out-of-zone",
-                        message: `Clinician #${clinician.id} is out of zone`,
-                        createdAt: new Date()
-                    }
-                    await alertService.addAlert(alert);
+                const alert: Alert = {
+                    clinicianId: clinician.id,
+                    type: "out-of-zone",
+                    message: `Clinician #${clinician.id} is out of zone`,
+                    createdAt: new Date()
+                }
+                await alertService.addAlert(alert);
+
+                if (existingAlert && existingAlert.type === "out-of-zone") {
+                    console.log(`Skipping email for clinician ${clinician.id} because an out of zone alert email has already been sent. We will continue to poll for updates.`);
+                    return;
+                }
+                else if (existingAlert && existingAlert.type === "api-error") {
+                    console.log(`We now have an update on clinician ${clinician.id}, and they are out of zone.`);
                     await emailService.send({
-                        from: config.EMAIL_USER,
-                        to: config.EMAIL_USER,
+                        from: config.ALERT_SENDER_EMAIL,
+                        to: config.ALERT_RECIPIENT_EMAIL,
                         subject: `Clinician #${clinician.id} is out of zone`,
-                        message: `Clinician #${clinician.id} is currently out of the safety zone. Please check in on them. Another alert will be sent if/when they return to the safety zone.`
+                        message: `A previous alert indicated that an error occured while trying to poll Clinician #${clinician.id}'s status, but we now have an update on their status. They are out of their safety zone. Please check in on them. Another alert will be sent if/when they return to their safety zone.`
+                    });
+                    return;
+                } else if (!existingAlert) {
+                    console.log(`URGENT: Clinician ${clinician.id} is out of their safety zone.`);
+                    await emailService.send({
+                        from: config.ALERT_SENDER_EMAIL,
+                        to: config.ALERT_RECIPIENT_EMAIL,
+                        subject: `Clinician #${clinician.id} is out of zone`,
+                        message: `Clinician #${clinician.id} is currently out of the safety zone. Please check in on them. Another alert will be sent if/when they return to their safety zone.`
                     });
                 }
 
                 break;
             case "in-zone":
-                if (existingAlert) {
-                    console.log(`Clinician ${clinician.id} has returned to zone`);
+                if (existingAlert && existingAlert.type === "out-of-zone") {
+                    console.log(`Clinician ${clinician.id} is back in their safety zone.`);
                     await alertService.deleteAlert(clinician.id);
                     await emailService.send({
-                        from: config.EMAIL_USER,
-                        to: config.EMAIL_USER,
-                        subject: `Clinician #${clinician.id} is in the safety zone`,
-                        message: `A previous alert indicated that ${existingAlert.type === "out-of-zone" ? `Clinician #${clinician.id} was out of their safety zone` : `an error occured while trying to poll Clinician #${clinician.id}'s status`}. They are back in the safety zone.`
+                        from: config.ALERT_SENDER_EMAIL,
+                        to: config.ALERT_RECIPIENT_EMAIL,
+                        subject: `Good news! Clinician #${clinician.id} is back in their safety zone.`,
+                        message: `A previous alert indicated that Clinician #${clinician.id} was out of their safety zone, but they are now back in their safety zone.`
+                    });
+                } else if (existingAlert && existingAlert.type === "api-error") {
+                    console.log(`We now have an update on clinician ${clinician.id}, and they are in the safety zone.`);
+                    await alertService.deleteAlert(clinician.id);
+                    await emailService.send({
+                        from: config.ALERT_SENDER_EMAIL,
+                        to: config.ALERT_RECIPIENT_EMAIL,
+                        subject: `Good news! Clinician #${clinician.id} is back in their safety zone.`,
+                        message: `A previous alert indicated that an error occured while trying to poll Clinician #${clinician.id}'s status, but we now have an update on their status. They are in their safety zone.`
                     });
                 }
 

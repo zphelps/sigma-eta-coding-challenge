@@ -34,14 +34,14 @@ class ClinicianService {
             const { features } = data;
 
             if (!features) {
-                throw new Error(`Invalid feature data for clinician ${clinicianId}.`);
+                throw new Error(`Invalid feature data for clinician ${clinicianId}. Data: ${JSON.stringify(data)}`);
             }
 
             const safety_zone = features.find((feature: Feature) => feature.geometry.type === 'Polygon');
             const current_location = features.find((feature: Feature) => feature.geometry.type === 'Point');
 
             if (!safety_zone || !current_location) {
-                throw new Error(`Invalid GeoJSON data for clinician ${clinicianId}.`);
+                throw new Error(`Invalid GeoJSON data for clinician ${clinicianId}. Data: ${JSON.stringify(data)}`);
             }
 
             const inSafetyZone = turf.booleanPointInPolygon(current_location.geometry as Point, safety_zone.geometry as Polygon);
