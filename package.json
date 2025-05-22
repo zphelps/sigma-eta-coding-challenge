@@ -27,10 +27,13 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.812.0",
     "@turf/helpers": "^7.2.0",
     "@turf/turf": "^7.2.0",
+    "aws-sdk": "^2.1692.0",
     "node-cron": "^4.0.5",
     "nodemailer": "^7.0.3",
+    "uuid": "^11.1.0",
     "zod": "^3.25.7"
   }
 }

@@ -5,11 +5,8 @@ import { EmailService } from "../../services/emailService";
 import { createTransport } from "nodemailer";
 import { config } from "../../config";
 
-
 const emailService = new EmailService(createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
     auth: {
         user: config.EMAIL_USER,
         pass: config.EMAIL_PASSWORD,
@@ -25,7 +22,7 @@ const pollClinicians = async () => {
 
     await Promise.all(clinicians.map(async (clinician) => {
         const status = await clinicianService.getClinicianStatus(clinician.id);
-        const existingAlert = alertService.getAlertForClinician(clinician.id);
+        const existingAlert = await alertService.getAlertForClinician(clinician.id);
 
         if (status.error) {
             console.error(`Error fetching clinician status for clinician ${clinician.id}: ${status.error}`);
@@ -36,7 +33,7 @@ const pollClinicians = async () => {
                 createdAt: new Date()
             }
 
-            alertService.addAlert(alert);
+            await alertService.addAlert(alert);
             await emailService.send({
                 from: config.EMAIL_USER,
                 to: config.EMAIL_USER,
@@ -57,7 +54,7 @@ const pollClinicians = async () => {
                         message: `Clinician #${clinician.id} is out of zone`,
                         createdAt: new Date()
                     }
-                    alertService.addAlert(alert);
+                    await alertService.addAlert(alert);
                     await emailService.send({
                         from: config.EMAIL_USER,
                         to: config.EMAIL_USER,
@@ -70,7 +67,7 @@ const pollClinicians = async () => {
             case "in-zone":
                 if (existingAlert) {
                     console.log(`Clinician ${clinician.id} has returned to zone`);
-                    alertService.deleteAlert(clinician.id);
+                    await alertService.deleteAlert(clinician.id);
                     await emailService.send({
                         from: config.EMAIL_USER,
                         to: config.EMAIL_USER,
