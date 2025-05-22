@@ -26,22 +26,22 @@ class ClinicianService {
             const response = await fetch(`${config.BASE_URL}/clinicianstatus/${clinicianId}`);
 
             if (!response.ok) {
-                return {
-                    id: clinicianId,
-                    error: `Failed to fetch clinician status for clinician ${clinicianId}`,
-                    last_updated: new Date()
-                }
+                throw new Error(`Failed to fetch clinician status for clinician ${clinicianId}: ${response.statusText}`);
             }
 
             const data = await response.json();
 
             const { features } = data;
 
+            if (!features) {
+                throw new Error(`Invalid feature data for clinician ${clinicianId}.`);
+            }
+
             const safety_zone = features.find((feature: Feature) => feature.geometry.type === 'Polygon');
             const current_location = features.find((feature: Feature) => feature.geometry.type === 'Point');
 
             if (!safety_zone || !current_location) {
-                throw new Error(`Invalid GeoJSON data for clinician ${clinicianId}`);
+                throw new Error(`Invalid GeoJSON data for clinician ${clinicianId}.`);
             }
 
             const inSafetyZone = turf.booleanPointInPolygon(current_location.geometry as Point, safety_zone.geometry as Polygon);

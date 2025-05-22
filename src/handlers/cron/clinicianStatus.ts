@@ -38,7 +38,7 @@ const pollClinicians = async () => {
                 from: config.EMAIL_USER,
                 to: config.EMAIL_USER,
                 subject: `Error fetching clinician status for clinician ${clinician.id}`,
-                message: `The following error occurred while fetching the status for clinician #${clinician.id}: \n\n${status.error} \n\n We will continue to poll for updates.`
+                message: `The following error occurred while fetching the status for clinician #${clinician.id}: \n\n"${status.error}" \n\n We will continue to poll for updates.`
             });
 
             return;
@@ -83,6 +83,7 @@ const pollClinicians = async () => {
 }
 
 const startClinicianPolling = async (interval_seconds: number = 5) => {
+    console.log(`Starting clinician polling with interval of ${interval_seconds} seconds`);
     cron.schedule(`*/${interval_seconds} * * * * *`, pollClinicians);
 }
 
